@@ -1,14 +1,9 @@
 const question = document.querySelector('#question');
-const choices = Array.from(document.querySelector('#question'));
+const choices = Array.from(document.querySelectorAll('.choice-text'));
 const progressText = document.querySelector('#progressText');
 const scoreText = document.querySelector('#score');
 const progressBarFull = document.querySelector('#ProgressBarFull');
-
-let currentQuestion = {}
-let acceptingAnswers = true;
-let score = 0;
-let questionCounter = 0;
-let availableQuestions = []
+const timer = document.querySelector("#timer");
 
 let questions = [
   {
@@ -93,61 +88,78 @@ let questions = [
   },
 ]
 
-const score_points = 100;
-const max_questions = 10;
+let currentQuestion = {}
+let acceptingAnswers = true;
+let score = 0;
+let questionCounter = 0;
+let availableQuestions = []
+let time = questions.length * 15;
+let timerId;
 
-startQuiz = () => {
+
+
+const SCORE_POINTS = 100;
+const MAX_QUESTIONS = 10;
+
+function startQuiz() {
+  console.log("here")
   questionCounter = 0;
   score = 0;
   availableQuestions = [...questions];
+  console.log(availableQuestions)
+  timerId = setInterval(clockTick, 1000);
   getNewQuestion();
 }
 
+
+function clockTick() {
+  time--;
+  timer.innerText = time;
+}
+
 getNewQuestion = () => {
-  if(availableQuestions.length === 0 || questionCounter > max_questions) {
+  if(availableQuestions.length === 0 || questionCounter > MAX_QUESTIONS) {
     localStorage.setItem('mostRecentScore', score);
 
-    return window.location.assign('/end.html')
+    // return window.location.assign('/end.html')
   }
 
   questionCounter++
-  progressText.innterText = 'Question ${questionCounter} of ${max_questions}'
-  //progressBarFull.style.width = '${(questionCounter/max_questions) * 100}%'
+  // progressText.innerText = 'Question ${questionCounter} of ${MAX_QUESTIONS}'
+  // progressBarFull.style.width = '${(questionCounter/max_questions) * 100}%'
 
-  const questionIndex = Math.floor(Math.random() * availableQuestions.length)
-  currentQuestion = availableQuestions[questionIndex]
-  question.innterText = currentQuestion.question
+  // const questionIndex = Math.floor(Math.random() * availableQuestions.length)
+  currentQuestion = availableQuestions[questionCounter]
+  console.log(currentQuestion)
+  question.innerText = currentQuestion.question
 
   choices.forEach(choice => {
     const number = choice.dataset['number']
-    choice.innterText = currentQuestion['choice' + number]
+    choice.innerText = currentQuestion['choice' + number]
   })
 
-  availableQuestions.splice(questionIndex, 1)
+  availableQuestions.splice(questionCounter, 1)
 
   acceptingAnswers = true;
 }
 
 choices.forEach(choice => {
-  choices.addEventListener('click', e => {
+  choice.addEventListener("click", function(e)  {
     if(!acceptingAnswers) return
 
     acceptingAnswers = false
     const selectedChoice = e.target
     const selectedAnswer = selectedChoice.dataset['number']
+    console.log(selectedAnswer)
+    console.log(currentQuestion.answer)
 
-    let classToApply = selectedAnswer == currentQuestion.answer ? 'correct' :
-    'incorrect'
-
-    if(classToApply == 'correct') {
-      incrementScore(score_points)
-      selectedChoice.parentElement.classList.add(classToApply)
-
-      setTimeout(() => {
-        selectedChoice.parentElement.classList.remove(classToApply)
-        getNewQuestion()
-
-      }, 1000)
+    
+    if (selectedAnswer != currentQuestion.answer) {
+      time -= 15
+      timer.innerText = time;
+    }
+    else {
+      getNewQuestion();
     }
   })
 })
@@ -157,4 +169,4 @@ incrementScore = num => {
   scoreText.innerText = score
 }
 
-startQuiz()
+startQuiz();
