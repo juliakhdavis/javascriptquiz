@@ -88,24 +88,25 @@ let questions = [
   },
 ]
 
+
+const SCORE_POINTS = 100;
+const MAX_QUESTIONS = 10;
+const TIME_PER_QUESTION = 15; // 15 seconds per question
+
 let currentQuestion = {}
 let acceptingAnswers = true;
 let score = 0;
 let questionCounter = 0;
 let availableQuestions = []
-let time = questions.length * 15;
+let time = questions.length * TIME_PER_QUESTION;
 let timerId;
-
-
-
-const SCORE_POINTS = 100;
-const MAX_QUESTIONS = 10;
 
 function startQuiz() {
   console.log("here")
   questionCounter = 0;
   score = 0;
   availableQuestions = [...questions];
+  timer.innerText = time; // update timer on the DOM
   console.log(availableQuestions)
   timerId = setInterval(clockTick, 1000);
   getNewQuestion();
@@ -113,24 +114,31 @@ function startQuiz() {
 
 
 function clockTick() {
+  console.log(time, "time left")
   time--;
   timer.innerText = time;
+  if (time <= 0){
+    clearInterval(timerId);
+    return window.location.assign('../code_quiz/end.html')
+  }
 }
 
 getNewQuestion = () => {
-  if(availableQuestions.length === 0 || questionCounter > MAX_QUESTIONS) {
+  if(availableQuestions.length === 0 || questionCounter > MAX_QUESTIONS || time <= 0) {
     localStorage.setItem('mostRecentScore', score);
 
-    // return window.location.assign('/end.html')
+    console.log("End of quiz! no more questions left!")
+    // TODO may need to remove "/code_quiz" and have it be just "../end.html"
+    // when this is uploaded to github. Double check once it's hosted on github.io!
+    return window.location.assign('../code_quiz/end.html')
   }
 
   questionCounter++
   // progressText.innerText = 'Question ${questionCounter} of ${MAX_QUESTIONS}'
   // progressBarFull.style.width = '${(questionCounter/max_questions) * 100}%'
 
-  // const questionIndex = Math.floor(Math.random() * availableQuestions.length)
-  currentQuestion = availableQuestions[questionCounter]
-  console.log(currentQuestion)
+  const questionIndex = Math.floor(Math.random() * availableQuestions.length)
+  currentQuestion = availableQuestions[questionIndex]
   question.innerText = currentQuestion.question
 
   choices.forEach(choice => {
@@ -139,7 +147,6 @@ getNewQuestion = () => {
   })
 
   availableQuestions.splice(questionCounter, 1)
-
   acceptingAnswers = true;
 }
 
@@ -150,23 +157,39 @@ choices.forEach(choice => {
     acceptingAnswers = false
     const selectedChoice = e.target
     const selectedAnswer = selectedChoice.dataset['number']
-    console.log(selectedAnswer)
-    console.log(currentQuestion.answer)
+    console.log("Selected answer is", selectedAnswer, " - Correct answer is", currentQuestion.answer)
 
-    
     if (selectedAnswer != currentQuestion.answer) {
-      time -= 15
-      timer.innerText = time;
+       // If incorrect..
+       if(time < 15) {
+         // ..and less than 15 seconds are left.
+         clearInterval(timerId);
+         time = 0
+         timer.innerText = time
+       } else {
+         // ..more than 15 seconds are left.
+        time -= 15
+        timer.innerText = time;
+       }
     }
     else {
-      getNewQuestion();
+      // Correct...
+      incrementScore(SCORE_POINTS);
     }
+
+    getNewQuestion();
+
   })
 })
 
-incrementScore = num => {
+incrementScore = (num) => {
   score +=num
   scoreText.innerText = score
+}
+
+saveToLocalStorage = () => {
+  // Save 5 most recent items
+  // TODO
 }
 
 startQuiz();
