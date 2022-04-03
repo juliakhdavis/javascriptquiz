@@ -102,13 +102,18 @@ let time = questions.length * TIME_PER_QUESTION;
 let timerId;
 
 function startQuiz() {
-  console.log("here")
   questionCounter = 0;
   score = 0;
   availableQuestions = [...questions];
   timer.innerText = time; // update timer on the DOM
   console.log(availableQuestions)
   timerId = setInterval(clockTick, 1000);
+  
+  // reset the most recent score to null in local storage
+  localStorage.setItem('mostRecentScore', null);
+
+
+  // start the quiz
   getNewQuestion();
 }
 
@@ -118,19 +123,32 @@ function clockTick() {
   time--;
   timer.innerText = time;
   if (time <= 0){
-    clearInterval(timerId);
-    return window.location.assign('../code_quiz/end.html')
+    finishQuiz()
   }
+}
+
+/** 
+ * This function will be called when the quiz is ended. 
+ * It will save the score to local storage. 
+ */
+finishQuiz = () => {
+  // clear timer interval to stop calling it
+  clearInterval(timerId);
+
+  // set the current score to local storage
+  localStorage.setItem('mostRecentScore', score);
+  console.log("Most recent scored of", score, "has been stored to local storage.")
+  console.log(localStorage.getItem("mostRecentScore"))
+
+  // navigate to the scores page
+  return window.location.assign('./scores.html')
 }
 
 getNewQuestion = () => {
   if(availableQuestions.length === 0 || questionCounter > MAX_QUESTIONS || time <= 0) {
-    localStorage.setItem('mostRecentScore', score);
-
     console.log("End of quiz! no more questions left!")
-    // TODO may need to remove "/code_quiz" and have it be just "../end.html"
-    // when this is uploaded to github. Double check once it's hosted on github.io!
-    return window.location.assign('../code_quiz/end.html')
+    // return window.location.assign('./end.html')
+    finishQuiz()
   }
 
   questionCounter++
@@ -160,17 +178,17 @@ choices.forEach(choice => {
     console.log("Selected answer is", selectedAnswer, " - Correct answer is", currentQuestion.answer)
 
     if (selectedAnswer != currentQuestion.answer) {
-       // If incorrect..
-       if(time < 15) {
-         // ..and less than 15 seconds are left.
-         clearInterval(timerId);
-         time = 0
-         timer.innerText = time
-       } else {
+       // If incorrect...
+      if(time < 15) {
+        // ..and less than 15 seconds are left.
+        clearInterval(timerId);
+        time = 0
+        timer.innerText = time
+      } else {
          // ..more than 15 seconds are left.
         time -= 15
         timer.innerText = time;
-       }
+      }
     }
     else {
       // Correct...
@@ -178,7 +196,6 @@ choices.forEach(choice => {
     }
 
     getNewQuestion();
-
   })
 })
 
@@ -187,9 +204,6 @@ incrementScore = (num) => {
   scoreText.innerText = score
 }
 
-saveToLocalStorage = () => {
-  // Save 5 most recent items
-  // TODO
-}
+
 
 startQuiz();
